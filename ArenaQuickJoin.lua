@@ -55,13 +55,16 @@ local function InCombat()
 end
 
 local function CreateButton(buttonName)
-    local button = CreateFrame("Button", buttonName, UIParent, "SecureActionButtonTemplate, SecureHandlerStateTemplate, ActionButtonTemplate")
+    local button = CreateFrame("Button", buttonName, UIParent, "ActionButtonTemplate, SecureActionButtonTemplate, SecureHandlerStateTemplate")
     button:SetPoint("CENTER")
     button:SetSize(45, 45)
     button:SetClampedToScreen(true)
     button:SetMovable(true)
     button:RegisterForDrag("LeftButton")
     button:RegisterForClicks('AnyUp', 'AnyDown')
+    
+    -- NOTE: Hides the popup arrow of the FlyoutButtonTemplate
+    button.Arrow:Hide()
 
     function button:Active(style)
         if style == "show" then
