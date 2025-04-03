@@ -54,8 +54,9 @@ local function InCombat()
     return InCombatLockdown() or UnitAffectingCombat("player")
 end
 
-local function CreateButton(buttonName)
-    local button = CreateFrame("Button", buttonName, UIParent, "ActionButtonTemplate, SecureActionButtonTemplate, SecureHandlerStateTemplate")
+local JoinMacroButton
+do
+    local button = CreateFrame("Button", "ArenaQuickJoinMacroButton", UIParent, "ActionButtonTemplate, SecureActionButtonTemplate, SecureHandlerStateTemplate")
     button:SetPoint("CENTER")
     button:SetSize(45, 45)
     button:SetClampedToScreen(true)
@@ -90,7 +91,7 @@ local function CreateButton(buttonName)
         self.icon:SetTexture("Interface\\Icons\\" .. texture)
     end
 
-    return button
+    JoinMacroButton = button
 end
 
 local function GetGroupSizeButton()
@@ -203,16 +204,15 @@ local function ShowTooltipStateInfo(selectedBracketButton)
     GameTooltip:Show()
 end
 
-local joinMacroButton, configureMacroButton, isMacroButtonConfigured, selectedBracketButton
+local configureMacroButton, isMacroButtonConfigured, selectedBracketButton
 frame:SetScript("OnEvent", function(_, eventName, ...)
     if eventName == "PLAYER_LOGIN" then
         ArenaQuickJoinDB = ArenaQuickJoinDB or {
             ["Position"] = {"CENTER", "CENTER", 0, 0}
         }
 
-        joinMacroButton = CreateButton("ArenaQuickJoinMacroButton")
-        joinMacroButton:SetTexture("achievement_bg_killxenemies_generalsroom")
-        joinMacroButton:SetAttribute("type", "macro")
+        JoinMacroButton:SetTexture("achievement_bg_killxenemies_generalsroom")
+        JoinMacroButton:SetAttribute("type", "macro")
 
         do
             local initAddon, initAddonHandle
@@ -225,8 +225,8 @@ frame:SetScript("OnEvent", function(_, eventName, ...)
                 if not isLoaded then
                     GameTooltip:Hide()
 
-                    if joinMacroButton:IsEnabled() then
-                        joinMacroButton:Inactive("grayout")
+                    if JoinMacroButton:IsEnabled() then
+                        JoinMacroButton:Inactive("grayout")
                     end
 
                     if not isLoaded then
@@ -240,11 +240,11 @@ frame:SetScript("OnEvent", function(_, eventName, ...)
                         initAddonHandle = nil
                     end
                     initAddon = nil
-                    joinMacroButton:Active("normal")
+                    JoinMacroButton:Active("normal")
                 end
             end
 
-            joinMacroButton:HookScript("OnClick", initAddon)
+            JoinMacroButton:HookScript("OnClick", initAddon)
         end
 
         do
@@ -252,7 +252,7 @@ frame:SetScript("OnEvent", function(_, eventName, ...)
                 GameTooltip:Hide()
             end
     
-            joinMacroButton:SetScript("OnDragStart", function(self)
+            JoinMacroButton:SetScript("OnDragStart", function(self)
                 if not IsShiftKeyDown() then
                     return
                 end
@@ -260,7 +260,7 @@ frame:SetScript("OnEvent", function(_, eventName, ...)
                 self:StartMoving()
             end)
 
-            joinMacroButton:SetScript("OnDragStop", function(self)
+            JoinMacroButton:SetScript("OnDragStop", function(self)
                 local point, _, relpoint, x, y = self:GetPoint()
                 ArenaQuickJoinDB["Position"] = { point, relpoint, x, y }
                 self:SetScript("OnUpdate", nil)
@@ -286,7 +286,7 @@ frame:SetScript("OnEvent", function(_, eventName, ...)
                 GameTooltip:Hide()
             end
 
-            joinMacroButton:SetScript("OnEnter", function(self)
+            JoinMacroButton:SetScript("OnEnter", function(self)
                 local centerX, centerY = self:GetCenter()
                 local screenWidth, screenHeight = GetScreenWidth()/2, GetScreenHeight()/2
                 local anchor = "ANCHOR_"
@@ -312,13 +312,13 @@ frame:SetScript("OnEvent", function(_, eventName, ...)
                 end
             end)
 
-            joinMacroButton:SetScript("OnLeave", hideTooltip)
+            JoinMacroButton:SetScript("OnLeave", hideTooltip)
         end
 
         do
             local point, relpoint, x, y = unpack(ArenaQuickJoinDB["Position"])
-            joinMacroButton:ClearAllPoints()
-            joinMacroButton:SetPoint(point, UIParent, relpoint, x, y)
+            JoinMacroButton:ClearAllPoints()
+            JoinMacroButton:SetPoint(point, UIParent, relpoint, x, y)
         end
     elseif eventName == "ADDON_LOADED" then
         local arg1 = ...
@@ -375,29 +375,29 @@ frame:SetScript("OnEvent", function(_, eventName, ...)
         end
 
         if not InCombat() then
-            configureMacroButton(joinMacroButton)
+            configureMacroButton(JoinMacroButton)
         end
     elseif eventName == "GROUP_ROSTER_UPDATE" then
-        joinMacroButton:SetFrameRef("GroupSizeButton", GetGroupSizeButton())
+        JoinMacroButton:SetFrameRef("GroupSizeButton", GetGroupSizeButton())
     elseif eventName == "PLAYER_ENTERING_WORLD" then
         if IsInInstance() then
-            joinMacroButton:Inactive("hide")
+            JoinMacroButton:Inactive("hide")
         else
-            joinMacroButton:Active("show")
+            JoinMacroButton:Active("show")
         end
     elseif eventName == "PLAYER_REGEN_DISABLED" then
-        joinMacroButton:Inactive("grayout")
+        JoinMacroButton:Inactive("grayout")
     elseif eventName == "PLAYER_REGEN_ENABLED" then
         if configureMacroButton then 
-            configureMacroButton(joinMacroButton)
+            configureMacroButton(JoinMacroButton)
         end
-        joinMacroButton:Active("normal")
+        JoinMacroButton:Active("normal")
     elseif eventName == "MODIFIER_STATE_CHANGED" then
         local key, down = ...
         if down == 1 and (key == "LALT" or key == "RALT") then
-            joinMacroButton:SetTexture("achievement_bg_winwsg")
+            JoinMacroButton:SetTexture("achievement_bg_winwsg")
         else
-            joinMacroButton:SetTexture("achievement_bg_killxenemies_generalsroom")
+            JoinMacroButton:SetTexture("achievement_bg_killxenemies_generalsroom")
         end
     end
 end)
