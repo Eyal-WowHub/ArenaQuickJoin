@@ -8,8 +8,6 @@ Adds a convenient button that makes joining Arena/RBG matches hassle-free.
 
 This tiny addon tackles a frequent problem associated with macros similar to this `/click ConquestJoinButton`, preventing inadvertent entry into the Solo Shuffle queue or any other rated bracket available by making sure the correct bracket is selected according to group size. It streamlines the Arena/RBG match joining process, thereby improving the overall gaming experience.
 
-**Please note that the button only appears when you're at maximum level.**
-
 ## Features:
 
 - **Bindable Button:** The button can be binded by going to Options -> Keybindings -> ArenaQuickJoin.
