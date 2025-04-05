@@ -61,6 +61,7 @@ JoinMacroButton.Arrow:Hide()
 -- Properties
 JoinMacroButton.LastUpdate = 0
 JoinMacroButton.HasDragStarted = false
+JoinMacroButton.IsPvPUILoaded = false
 
 function JoinMacroButton:Active(style)
     if style == "show" then
@@ -88,7 +89,7 @@ end
 
 function JoinMacroButton:SetGroupBracket(selectedBracket)
     local numMembers = GetNumSubgroupMembers(1) + 1 -- +1 for the player
-    if ConquestJoinButton:IsEnabled() then
+    if ConquestJoinButton and ConquestJoinButton:IsEnabled() then
         if selectedBracket == 8 and numMembers <= 2 then
             self:SetAttribute("groupBracket", selectedBracket)
         else
@@ -405,6 +406,8 @@ JoinMacroButton:SetScript("OnEvent", function(self, eventName, ...)
         if not InCombat() and self.Configure then
             self:Configure()
         end
+
+        self.IsPvPUILoaded = true
     elseif eventName == "GROUP_ROSTER_UPDATE" then
         local selectedBracket = self:GetAttribute("selectedBracket")
         self:SetGroupBracket(selectedBracket)
@@ -417,7 +420,7 @@ JoinMacroButton:SetScript("OnEvent", function(self, eventName, ...)
     elseif eventName == "PLAYER_REGEN_DISABLED" then
         self:Inactive("grayout")
     elseif eventName == "PLAYER_REGEN_ENABLED" then
-        if self.Configure then 
+        if self.IsPvPUILoaded and self.Configure then 
             self:Configure()
         end
         self:Active("normal")
