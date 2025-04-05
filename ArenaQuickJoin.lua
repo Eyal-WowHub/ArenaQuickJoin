@@ -122,6 +122,7 @@ do
     }
 
     local TANK, HEALER, DAMAGE = TANK, HEALER, DAMAGE
+    local PVP_ITEM_LEVEL = NORMAL_FONT_COLOR:WrapTextInColorCode(STAT_AVERAGE_PVP_ITEM_LEVEL:gsub("%%d", "%%s"))
 
     local DUNGEONS_BUTTON = DUNGEONS_BUTTON
     local BATTLEFIELD_JOIN = BATTLEFIELD_JOIN
@@ -179,7 +180,15 @@ do
         GameTooltip:AddTexture(GetMicroIconForRole("HEALER"), HEALER_TEXTURE_SETTINGS)
         GameTooltip:AddLine(dpsLabel)
         GameTooltip:AddTexture(GetMicroIconForRole("DAMAGER"), DAMAGER_TEXTURE_SETTINGS)
-    
+
+        local _, _, playerPvPItemLevel = GetAverageItemLevel()
+
+        if playerPvPItemLevel then
+            playerPvPItemLevel = RoundToSignificantDigits(playerPvPItemLevel, 2)
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine(PVP_ITEM_LEVEL:format(playerPvPItemLevel))
+        end
+
         GameTooltip:AddLine(" ")
     end
     
