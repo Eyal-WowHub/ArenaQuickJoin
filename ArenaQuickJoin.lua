@@ -214,6 +214,8 @@ do
             end
         elseif isFrameVisible then
             GameTooltip:AddLine(L["Close the %s frame."]:format(DUNGEONS_BUTTON))
+        elseif UnitLevel("player") < GetMaxLevelForPlayerExpansion() then
+            GameTooltip:AddLine(RED_FONT_COLOR:WrapTextInColorCode(L["You must be max level to queue for rated PvP."]))
         elseif groupBracket == 0 then
             GameTooltip:AddLine(RED_FONT_COLOR:WrapTextInColorCode(L["Cannot join the selected bracket. The %s button is disabled."]:format(BATTLEFIELD_JOIN)))
         elseif groupBracket ~= selectedBracket then
@@ -297,7 +299,7 @@ function JoinMacroButton:Init()
     self:SetAttribute("type", "macro")
 
     initAddon = function()
-        if IsShiftKeyDown() or UnitLevel("player") < GetMaxLevelForPlayerExpansion() then
+        if IsShiftKeyDown() then
             return
         end
         local _, isLoaded = IsAddOnLoaded(PVPUI_ADDON_NAME)
