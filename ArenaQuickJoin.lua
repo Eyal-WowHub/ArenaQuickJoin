@@ -226,7 +226,7 @@ do
         elseif UnitLevel("player") < GetMaxLevelForPlayerExpansion() then
             GameTooltip:AddLine(RED_FONT_COLOR:WrapTextInColorCode(L["You must be max level to queue for rated PvP."]))
         elseif groupBracket == 0 then
-            GameTooltip:AddLine(RED_FONT_COLOR:WrapTextInColorCode(L["Cannot join the selected bracket. The %s button is disabled."]:format(BATTLEFIELD_JOIN)))
+            GameTooltip:AddLine(RED_FONT_COLOR:WrapTextInColorCode(L[L["The '%s' button is disabled."]]:format(BATTLEFIELD_JOIN)))
         elseif groupBracket ~= selectedBracket then
             GameTooltip:AddLine(RED_FONT_COLOR:WrapTextInColorCode(L["Click to open the PvP Rated tab, \nto select a bracket that matches your group size."]))
         else
