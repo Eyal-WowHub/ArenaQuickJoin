@@ -15,12 +15,6 @@ local BATTLEGROUND_10V10 = BATTLEGROUND_10V10
 
 local GameTooltip = GameTooltip
 local PVEFrame = PVEFrame
-local ConquestJoinButton = ConquestJoinButton
-local RatedSoloShuffle = ConquestFrame.RatedSoloShuffle
-local RatedBGBlitz = ConquestFrame.RatedBGBlitz
-local Arena2v2 = ConquestFrame.Arena2v2
-local Arena3v3 = ConquestFrame.Arena3v3
-local RatedBG = ConquestFrame.RatedBG
 
 local NewTicker = C_Timer.NewTicker
 local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
@@ -343,15 +337,15 @@ function JoinMacroButton:Configure()
 
     hooksecurefunc("ConquestFrame_SelectButton", function(frameSelectedButton)
         local selectedBracket = 0
-        if frameSelectedButton == RatedSoloShuffle then
+        if frameSelectedButton == ConquestFrame.RatedSoloShuffle then
             selectedBracket = 1
-        elseif frameSelectedButton == RatedBGBlitz then
+        elseif frameSelectedButton == ConquestFrame.RatedBGBlitz then
             selectedBracket = 8
-        elseif frameSelectedButton == Arena2v2 then
+        elseif frameSelectedButton == ConquestFrame.Arena2v2 then
             selectedBracket = 2
-        elseif frameSelectedButton == Arena3v3 then
+        elseif frameSelectedButton == ConquestFrame.Arena3v3 then
             selectedBracket = 3
-        elseif frameSelectedButton == RatedBG then
+        elseif frameSelectedButton == ConquestFrame.RatedBG then
             selectedBracket = 10
         end
         self:SetAttribute("selectedBracket", selectedBracket)
