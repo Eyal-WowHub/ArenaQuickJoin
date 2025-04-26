@@ -58,11 +58,6 @@ JoinMacroButton:RegisterEvent("ADDON_LOADED")
 -- NOTE: Hides the popup arrow of the FlyoutButtonTemplate
 JoinMacroButton.Arrow:Hide()
 
--- Properties
-JoinMacroButton.LastUpdate = 0
-JoinMacroButton.HasDragStarted = false
-JoinMacroButton.IsPvPUILoaded = false
-
 function JoinMacroButton:Active(style)
     if style == "show" then
         self:SetAlpha(1)
@@ -98,6 +93,92 @@ function JoinMacroButton:SetGroupBracket(selectedBracket)
     else
         self:SetAttribute("groupBracket", 0)
     end
+end
+
+function JoinMacroButton:Load()
+    local loadAddon, timerHandle
+
+    self:SetTexture("achievement_bg_killxenemies_generalsroom")
+    self:SetAttribute("type", "macro")
+
+    loadAddon = function()
+        if IsShiftKeyDown() then
+            return
+        end
+        local _, isLoaded = IsAddOnLoaded(PVPUI_ADDON_NAME)
+        if not isLoaded then
+            GameTooltip:Hide()
+
+            if self:IsEnabled() then
+                self:Inactive("grayout")
+            end
+
+            if not isLoaded then
+                UIParentLoadAddOn(PVPUI_ADDON_NAME)
+            end
+
+            timerHandle = NewTicker(1, loadAddon)
+        else
+            if timerHandle then
+                timerHandle:Cancel()
+                timerHandle = nil
+            end
+            loadAddon = nil
+            self:Active("normal")
+        end
+    end
+
+    self:HookScript("OnClick", loadAddon)
+    self.Load = nil
+end
+
+function JoinMacroButton:Init()
+    self:RegisterEvent("GROUP_ROSTER_UPDATE")
+    self:RegisterEvent("MODIFIER_STATE_CHANGED")
+
+    self:SetFrameRef("PVEFrame", PVEFrame)
+    self:SetAttribute("selectedBracket", 1)
+    self:SetGroupBracket()
+
+    hooksecurefunc("ConquestFrame_SelectButton", function(frameSelectedButton)
+        local selectedBracket = 0
+        if frameSelectedButton == ConquestFrame.RatedSoloShuffle then
+            selectedBracket = 1
+        elseif frameSelectedButton == ConquestFrame.RatedBGBlitz then
+            selectedBracket = 8
+        elseif frameSelectedButton == ConquestFrame.Arena2v2 then
+            selectedBracket = 2
+        elseif frameSelectedButton == ConquestFrame.Arena3v3 then
+            selectedBracket = 3
+        elseif frameSelectedButton == ConquestFrame.RatedBG then
+            selectedBracket = 10
+        end
+        self:SetAttribute("selectedBracket", selectedBracket)
+        self:SetGroupBracket(selectedBracket)
+    end)
+
+    SecureHandlerWrapScript(self, "OnClick", self, [[
+        if IsShiftKeyDown() then
+            self:SetAttribute("macrotext", "")
+            return
+        end
+
+        local PVEFrame = self:GetFrameRef("PVEFrame")
+        local groupBracket = self:GetAttribute("groupBracket")
+        local selectedBracket = self:GetAttribute("selectedBracket")
+
+        if PVEFrame:IsVisible() then
+            self:SetAttribute("macrotext", "/click LFDMicroButton")
+        elseif IsAltKeyDown() then
+            self:SetAttribute("macrotext", "/click LFDMicroButton\n/click PVEFrameTab2\n/click PVPQueueFrameCategoryButton1")
+        elseif groupBracket ~= selectedBracket or IsControlKeyDown() then
+            self:SetAttribute("macrotext", "/click LFDMicroButton\n/click PVEFrameTab2\n/click PVPQueueFrameCategoryButton2")
+        else
+            self:SetAttribute("macrotext", "/click ConquestJoinButton")
+        end
+    ]])
+
+    self.Init = nil
 end
 
 do
@@ -193,7 +274,7 @@ do
         GameTooltip:AddLine(" ")
     end
 
-    function JoinMacroButton:AddTooltipWelcomeInfo()
+    local function AddTooltipWelcomeInfo()
         GameTooltip:ClearLines()
 
         AddTooltipHeader()
@@ -205,14 +286,14 @@ do
         GameTooltip:AddLine(L["To open the PvP Quick Match tab %s."]:format(BLUE_FONT_COLOR:WrapTextInColorCode("Alt + Click")))
     end
 
-    function JoinMacroButton:AddTooltipStateInfo()
+    local function AddTooltipStateInfo()
         GameTooltip:ClearLines()
 
         AddTooltipHeader()
 
         local isFrameVisible = PVEFrame:IsVisible()
-        local groupBracket = self:GetAttribute("groupBracket")
-        local selectedBracket = self:GetAttribute("selectedBracket")
+        local groupBracket = JoinMacroButton:GetAttribute("groupBracket")
+        local selectedBracket = JoinMacroButton:GetAttribute("selectedBracket")
 
         if IsShiftKeyDown() then
             GameTooltip:AddLine(L["Move the button."])
@@ -237,42 +318,46 @@ do
             end
         end
     end
-end
 
-do
-    local UPDATE_INTERVAL = 0.1
+    local OnTooltipUpdate
+    do
+        local UPDATE_INTERVAL = 0.1
 
-    local OnTooltipUpdate = function(self, elapsed)
-        self.LastUpdate = self.LastUpdate + elapsed
-        if self.LastUpdate > UPDATE_INTERVAL then
-            if self.HasDragStarted then
-                GameTooltip:Hide()
-            else
-                if self.Init then
-                    self:AddTooltipWelcomeInfo()
+        local hasDragStarted = false
+        local lastUpdate = 0
+
+        OnTooltipUpdate = function(self, elapsed)
+            lastUpdate = lastUpdate + elapsed
+            if lastUpdate > UPDATE_INTERVAL then
+                if hasDragStarted then
+                    GameTooltip:Hide()
                 else
-                    self:AddTooltipStateInfo()
+                    if self.Init then
+                        AddTooltipWelcomeInfo()
+                    else
+                        AddTooltipStateInfo()
+                    end
+                    GameTooltip:Show()
                 end
-                GameTooltip:Show()
+                lastUpdate = 0
             end
-            self.LastUpdate = 0
         end
+
+        JoinMacroButton:SetScript("OnDragStart", function(self)
+            if not IsShiftKeyDown() then
+                return
+            end
+            hasDragStarted = true
+            self:StartMoving()
+        end)
+
+        JoinMacroButton:SetScript("OnDragStop", function(self)
+            local point, _, relpoint, x, y = self:GetPoint()
+            ArenaQuickJoinDB["Position"] = { point, relpoint, x, y }
+            hasDragStarted = false
+            self:StopMovingOrSizing()
+        end)
     end
-
-    JoinMacroButton:SetScript("OnDragStart", function(self)
-        if not IsShiftKeyDown() then
-            return
-        end
-        self.HasDragStarted = true
-        self:StartMoving()
-    end)
-
-    JoinMacroButton:SetScript("OnDragStop", function(self)
-        local point, _, relpoint, x, y = self:GetPoint()
-        ArenaQuickJoinDB["Position"] = { point, relpoint, x, y }
-        self.HasDragStarted = false
-        self:StopMovingOrSizing()
-    end)
 
     JoinMacroButton:SetScript("OnEnter", function(self)
         local centerX, centerY = self:GetCenter()
@@ -302,134 +387,52 @@ do
     end)
 end
 
-function JoinMacroButton:Load()
-    local loadAddon, timerHandle
+do
+    local isPvPUILoaded = false
 
-    self:SetTexture("achievement_bg_killxenemies_generalsroom")
-    self:SetAttribute("type", "macro")
+    JoinMacroButton:SetScript("OnEvent", function(self, eventName, ...)
+        if eventName == "PLAYER_LOGIN" then
+            if self.Load then
+                self:Load()
+            end
+            local point, relpoint, x, y = unpack(ArenaQuickJoinDB["Position"])
+            self:ClearAllPoints()
+            self:SetPoint(point, UIParent, relpoint, x, y)
+        elseif eventName == "ADDON_LOADED" then
+            local arg1 = ...
 
-    loadAddon = function()
-        if IsShiftKeyDown() then
-            return
-        end
-        local _, isLoaded = IsAddOnLoaded(PVPUI_ADDON_NAME)
-        if not isLoaded then
-            GameTooltip:Hide()
-
-            if self:IsEnabled() then
-                self:Inactive("grayout")
+            if arg1 ~= PVPUI_ADDON_NAME then
+                return
             end
 
-            if not isLoaded then
-                UIParentLoadAddOn(PVPUI_ADDON_NAME)
+            if not InCombat() and self.Init then
+                self:Init()
             end
 
-            timerHandle = NewTicker(1, loadAddon)
-        else
-            if timerHandle then
-                timerHandle:Cancel()
-                timerHandle = nil
+            isPvPUILoaded = true
+        elseif eventName == "GROUP_ROSTER_UPDATE" then
+            local selectedBracket = self:GetAttribute("selectedBracket")
+            self:SetGroupBracket(selectedBracket)
+        elseif eventName == "PLAYER_ENTERING_WORLD" then
+            if IsInInstance() then
+                self:Inactive("hide")
+            else
+                self:Active("show")
             end
-            loadAddon = nil
+        elseif eventName == "PLAYER_REGEN_DISABLED" then
+            self:Inactive("grayout")
+        elseif eventName == "PLAYER_REGEN_ENABLED" then
+            if isPvPUILoaded and self.Init then
+                self:Init()
+            end
             self:Active("normal")
+        elseif eventName == "MODIFIER_STATE_CHANGED" then
+            local key, down = ...
+            if down == 1 and (key == "LALT" or key == "RALT") then
+                self:SetTexture("achievement_bg_winwsg")
+            else
+                self:SetTexture("achievement_bg_killxenemies_generalsroom")
+            end
         end
-    end
-
-    self:HookScript("OnClick", loadAddon)
-    self.Load = nil
-end
-
-function JoinMacroButton:Init()
-    self:RegisterEvent("GROUP_ROSTER_UPDATE")
-    self:RegisterEvent("MODIFIER_STATE_CHANGED")
-
-    self:SetFrameRef("PVEFrame", PVEFrame)
-    self:SetAttribute("selectedBracket", 1)
-    self:SetGroupBracket()
-
-    hooksecurefunc("ConquestFrame_SelectButton", function(frameSelectedButton)
-        local selectedBracket = 0
-        if frameSelectedButton == ConquestFrame.RatedSoloShuffle then
-            selectedBracket = 1
-        elseif frameSelectedButton == ConquestFrame.RatedBGBlitz then
-            selectedBracket = 8
-        elseif frameSelectedButton == ConquestFrame.Arena2v2 then
-            selectedBracket = 2
-        elseif frameSelectedButton == ConquestFrame.Arena3v3 then
-            selectedBracket = 3
-        elseif frameSelectedButton == ConquestFrame.RatedBG then
-            selectedBracket = 10
-        end
-        self:SetAttribute("selectedBracket", selectedBracket)
-        self:SetGroupBracket(selectedBracket)
     end)
-
-    SecureHandlerWrapScript(self, "OnClick", self, [[
-        if IsShiftKeyDown() then
-            self:SetAttribute("macrotext", "")
-            return
-        end
-
-        local PVEFrame = self:GetFrameRef("PVEFrame")
-        local groupBracket = self:GetAttribute("groupBracket")
-        local selectedBracket = self:GetAttribute("selectedBracket")
-
-        if PVEFrame:IsVisible() then
-            self:SetAttribute("macrotext", "/click LFDMicroButton")
-        elseif IsAltKeyDown() then
-            self:SetAttribute("macrotext", "/click LFDMicroButton\n/click PVEFrameTab2\n/click PVPQueueFrameCategoryButton1")
-        elseif groupBracket ~= selectedBracket or IsControlKeyDown() then
-            self:SetAttribute("macrotext", "/click LFDMicroButton\n/click PVEFrameTab2\n/click PVPQueueFrameCategoryButton2")
-        else
-            self:SetAttribute("macrotext", "/click ConquestJoinButton")
-        end
-    ]])
-
-    self.Init = nil
 end
-
-JoinMacroButton:SetScript("OnEvent", function(self, eventName, ...)
-    if eventName == "PLAYER_LOGIN" then
-        if self.Load then
-            self:Load()
-        end
-        local point, relpoint, x, y = unpack(ArenaQuickJoinDB["Position"])
-        self:ClearAllPoints()
-        self:SetPoint(point, UIParent, relpoint, x, y)
-    elseif eventName == "ADDON_LOADED" then
-        local arg1 = ...
-
-        if arg1 ~= PVPUI_ADDON_NAME then
-            return
-        end
-
-        if not InCombat() and self.Init then
-            self:Init()
-        end
-
-        self.IsPvPUILoaded = true
-    elseif eventName == "GROUP_ROSTER_UPDATE" then
-        local selectedBracket = self:GetAttribute("selectedBracket")
-        self:SetGroupBracket(selectedBracket)
-    elseif eventName == "PLAYER_ENTERING_WORLD" then
-        if IsInInstance() then
-            self:Inactive("hide")
-        else
-            self:Active("show")
-        end
-    elseif eventName == "PLAYER_REGEN_DISABLED" then
-        self:Inactive("grayout")
-    elseif eventName == "PLAYER_REGEN_ENABLED" then
-        if self.IsPvPUILoaded and self.Init then
-            self:Init()
-        end
-        self:Active("normal")
-    elseif eventName == "MODIFIER_STATE_CHANGED" then
-        local key, down = ...
-        if down == 1 and (key == "LALT" or key == "RALT") then
-            self:SetTexture("achievement_bg_winwsg")
-        else
-            self:SetTexture("achievement_bg_killxenemies_generalsroom")
-        end
-    end
-end)
