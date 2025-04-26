@@ -302,13 +302,13 @@ do
     end)
 end
 
-function JoinMacroButton:Init()
-    local initAddon, initAddonHandle
+function JoinMacroButton:Load()
+    local loadAddon, timerHandle
 
     self:SetTexture("achievement_bg_killxenemies_generalsroom")
     self:SetAttribute("type", "macro")
 
-    initAddon = function()
+    loadAddon = function()
         if IsShiftKeyDown() then
             return
         end
@@ -324,19 +324,19 @@ function JoinMacroButton:Init()
                 UIParentLoadAddOn(PVPUI_ADDON_NAME)
             end
 
-            initAddonHandle = NewTicker(1, initAddon)
+            timerHandle = NewTicker(1, loadAddon)
         else
-            if initAddonHandle then
-                initAddonHandle:Cancel()
-                initAddonHandle = nil
+            if timerHandle then
+                timerHandle:Cancel()
+                timerHandle = nil
             end
-            initAddon = nil
+            loadAddon = nil
             self:Active("normal")
         end
     end
 
-    self:HookScript("OnClick", initAddon)
-    self.Init = nil
+    self:HookScript("OnClick", loadAddon)
+    self.Load = nil
 end
 
 function JoinMacroButton:Configure()
@@ -390,8 +390,8 @@ end
 
 JoinMacroButton:SetScript("OnEvent", function(self, eventName, ...)
     if eventName == "PLAYER_LOGIN" then
-        if self.Init then
-            self:Init()
+        if self.Load then
+            self:Load()
         end
         local point, relpoint, x, y = unpack(ArenaQuickJoinDB["Position"])
         self:ClearAllPoints()
