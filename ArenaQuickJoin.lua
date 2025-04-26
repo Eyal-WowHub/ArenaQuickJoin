@@ -248,7 +248,7 @@ do
             if self.HasDragStarted then
                 GameTooltip:Hide()
             else
-                if self.Configure then
+                if self.Init then
                     self:AddTooltipWelcomeInfo()
                 else
                     self:AddTooltipStateInfo()
@@ -339,7 +339,7 @@ function JoinMacroButton:Load()
     self.Load = nil
 end
 
-function JoinMacroButton:Configure()
+function JoinMacroButton:Init()
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
     self:RegisterEvent("MODIFIER_STATE_CHANGED")
 
@@ -385,7 +385,7 @@ function JoinMacroButton:Configure()
         end
     ]])
 
-    self.Configure = nil
+    self.Init = nil
 end
 
 JoinMacroButton:SetScript("OnEvent", function(self, eventName, ...)
@@ -403,8 +403,8 @@ JoinMacroButton:SetScript("OnEvent", function(self, eventName, ...)
             return
         end
 
-        if not InCombat() and self.Configure then
-            self:Configure()
+        if not InCombat() and self.Init then
+            self:Init()
         end
 
         self.IsPvPUILoaded = true
@@ -420,8 +420,8 @@ JoinMacroButton:SetScript("OnEvent", function(self, eventName, ...)
     elseif eventName == "PLAYER_REGEN_DISABLED" then
         self:Inactive("grayout")
     elseif eventName == "PLAYER_REGEN_ENABLED" then
-        if self.IsPvPUILoaded and self.Configure then 
-            self:Configure()
+        if self.IsPvPUILoaded and self.Init then
+            self:Init()
         end
         self:Active("normal")
     elseif eventName == "MODIFIER_STATE_CHANGED" then
