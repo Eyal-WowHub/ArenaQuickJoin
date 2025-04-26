@@ -107,14 +107,14 @@ do
         verticalOffset = 3,
         margin = { left = 5, right = 5, top = 10 },
     }
-    
+
     local HEALER_TEXTURE_SETTINGS = {
         width = 20,
         height = 20,
         verticalOffset = 3,
         margin = { left = 5, right = 5, bottom = 10 },
     }
-    
+
     local DAMAGER_TEXTURE_SETTINGS = {
         width = 20,
         height = 20,
@@ -156,25 +156,25 @@ do
             return GRAY_FONT_COLOR:WrapTextInColorCode(label)
         end
     end
-    
+
     local function AddTooltipHeader()
         local key  = GetBindingKey("CLICK ArenaQuickJoinMacroButton:LeftButton")
-    
+
         if key then
             GameTooltip:AddLine(TOOLTIP_TITLE:format(key))
         else
             GameTooltip:AddLine(addonName)
         end
-        
+
         GameTooltip:AddLine(" ")
         GameTooltip_AddHighlightLine(GameTooltip, L["Selected PvP Roles:"])
-    
+
         local tank, healer, dps = GetPVPRoles()
-    
+
         local tankLabel = SetTooltipPvPRole(tank, TANK_TEXTURE_SETTINGS, TANK)
         local healerLabel = SetTooltipPvPRole(healer, HEALER_TEXTURE_SETTINGS, HEALER)
         local dpsLabel = SetTooltipPvPRole(dps, DAMAGER_TEXTURE_SETTINGS, DAMAGE)
-    
+
         GameTooltip:AddLine(tankLabel)
         GameTooltip:AddTexture(GetMicroIconForRole("TANK"), TANK_TEXTURE_SETTINGS)
         GameTooltip:AddLine(healerLabel)
@@ -192,28 +192,28 @@ do
 
         GameTooltip:AddLine(" ")
     end
-    
+
     function JoinMacroButton:AddTooltipWelcomeInfo()
         GameTooltip:ClearLines()
-    
+
         AddTooltipHeader()
-    
+
         GameTooltip:AddLine(RED_FONT_COLOR:WrapTextInColorCode(L["To set the button click once,\nand then wait for it to be enabled to queue."]))
         GameTooltip:AddLine(" ")
         GameTooltip:AddLine(L["To move the button %s."]:format(BLUE_FONT_COLOR:WrapTextInColorCode("Shift + Click")))
         GameTooltip:AddLine(L["To open the PvP Rated tab %s."]:format(BLUE_FONT_COLOR:WrapTextInColorCode("Ctrl + Click")))
         GameTooltip:AddLine(L["To open the PvP Quick Match tab %s."]:format(BLUE_FONT_COLOR:WrapTextInColorCode("Alt + Click")))
     end
-    
+
     function JoinMacroButton:AddTooltipStateInfo()
         GameTooltip:ClearLines()
-    
+
         AddTooltipHeader()
-    
+
         local isFrameVisible = PVEFrame:IsVisible()
         local groupBracket = self:GetAttribute("groupBracket")
         local selectedBracket = self:GetAttribute("selectedBracket")
-    
+
         if IsShiftKeyDown() then
             GameTooltip:AddLine(L["Move the button."])
         elseif (IsControlKeyDown() or IsAltKeyDown()) and not isFrameVisible then
@@ -398,7 +398,7 @@ JoinMacroButton:SetScript("OnEvent", function(self, eventName, ...)
         self:SetPoint(point, UIParent, relpoint, x, y)
     elseif eventName == "ADDON_LOADED" then
         local arg1 = ...
-        
+
         if arg1 ~= PVPUI_ADDON_NAME then
             return
         end
